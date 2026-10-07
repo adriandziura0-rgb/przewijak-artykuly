@@ -27,7 +27,7 @@ from bs4 import BeautifulSoup
 
 PORT = int(os.environ.get("PRZEWIJAK_PORT", "8765"))
 HOST = "127.0.0.1"
-APP_VERSION = "15.0-etap1-multisource-clean"
+APP_VERSION = "15.2-multisource-auto-new-clean"
 
 
 def runtime_platform():
@@ -197,6 +197,41 @@ def site_profile(url):
         # artykuły mają ścieżkę /<numeryczne_id>/<slug>.
         return {"name": "TVP INFO TAG", "selector": "a[href]", "strict": True, "dynamic": True, "filter": "tvp_numeric_article"}
     return {"name": "AUTO", "selector": "", "strict": False, "dynamic": False, "filter": ""}
+
+
+# Pakiet startowy redakcji. Źródła są dodawane tylko raz jako migracja V15.2;
+# późniejsze ręczne zmiany użytkownika nie są nadpisywane ani odtwarzane po usunięciu.
+# Dla serwisów bez dedykowanego profilu używamy jednej strony głównej/listy i
+# trybu nie-strict, aby mechanizm scoringu wybrał artykuły bez zgadywania paginacji.
+DEFAULT_SOURCE_PRESETS = [
+    {"name": "TVN24 — Najnowsze", "list_url": "https://tvn24.pl/najnowsze", "strict_selector": True, "list_mode": "auto", "max_articles": 40, "max_list_pages": 5, "enabled": True},
+    {"name": "TVP Info — Najnowsze", "list_url": "https://www.tvp.info/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "TV Republika — Najnowsze", "list_url": "https://tvrepublika.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Polsat News — Najnowsze", "list_url": "https://www.polsatnews.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "RMF24 — Fakty", "list_url": "https://www.rmf24.pl/fakty", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Radio ZET — Wiadomości", "list_url": "https://wiadomosci.radiozet.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Onet — Wiadomości", "list_url": "https://wiadomosci.onet.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Interia — Wydarzenia", "list_url": "https://wydarzenia.interia.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "WP — Wiadomości", "list_url": "https://wiadomosci.wp.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Rzeczpospolita", "list_url": "https://www.rp.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Money.pl — Gospodarka", "list_url": "https://www.money.pl/gospodarka/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Business Insider — Wiadomości", "list_url": "https://businessinsider.com.pl/wiadomosci", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Forsal", "list_url": "https://forsal.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Dziennik.pl", "list_url": "https://www.dziennik.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Bankier — Wiadomości", "list_url": "https://www.bankier.pl/wiadomosc/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Puls Biznesu", "list_url": "https://www.pb.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Niezależna", "list_url": "https://niezalezna.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "wPolityce", "list_url": "https://wpolityce.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "OKO.press", "list_url": "https://oko.press/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Do Rzeczy", "list_url": "https://dorzeczy.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    {"name": "Tygodnik Solidarność", "list_url": "https://tysol.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 40, "max_list_pages": 1, "enabled": True},
+    # Dodatkowe źródła zapisujemy, ale domyślnie wyłączamy: częściej stosują
+    # blokady 403/antybot lub cięższy frontend. Można je testować pojedynczo.
+    {"name": "PAP — Aktualności [TEST]", "list_url": "https://www.pap.pl/aktualnosci", "strict_selector": False, "list_mode": "single", "max_articles": 30, "max_list_pages": 1, "enabled": False},
+    {"name": "Gazeta Prawna [TEST]", "list_url": "https://www.gazetaprawna.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 30, "max_list_pages": 1, "enabled": False},
+    {"name": "WNP [TEST]", "list_url": "https://www.wnp.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 30, "max_list_pages": 1, "enabled": False},
+    {"name": "Portal Samorządowy [TEST]", "list_url": "https://www.portalsamorzadowy.pl/", "strict_selector": False, "list_mode": "single", "max_articles": 30, "max_list_pages": 1, "enabled": False},
+]
 
 
 def normalize_text(s):
@@ -1269,6 +1304,10 @@ class Downloader:
         self.fatal_stop_reason = ""
         self.active_source_id = 0
         self.active_source_name = ""
+        self.batch_running = False
+        self.batch_index = 0
+        self.batch_total = 0
+        self.batch_done_sources = 0
         self.network_stats = {"requests": 0, "cache_hits": 0, "redirects": 0, "browser_requests": 0, "browser_blocked": 0, "browser_pages": 0, "browser_scroll_rounds": 0}
         self.runtime_platform = runtime_platform()
         self.storage_mode = "filesystem"
@@ -1279,6 +1318,7 @@ class Downloader:
         self.output_root = self._default_output_root()
         self._bind_output_paths(self.output_root)
         self._init_db()
+        self._seed_default_sources_once()
         if self.runtime_platform == "android-termux":
             self._restore_saf_target()
         self.cleanup_stats = self._cleanup_disposable_files(self.output_root)
@@ -1441,6 +1481,54 @@ class Downloader:
                 FROM sources s ORDER BY s.enabled DESC, lower(s.name), s.id
             """).fetchall()
         return [self._source_row_to_dict(r) for r in rows]
+
+    def _seed_default_sources_once(self):
+        """Jednorazowo uzupełnia bazę o pakiet redakcji V15.2, bez nadpisywania użytkownika."""
+        migration_key = "source_pack_v15_2"
+        now = now_iso()
+        added = 0
+        with self._db_connect() as con:
+            done = con.execute("SELECT value FROM app_settings WHERE key=?", (migration_key,)).fetchone()
+            if done:
+                return 0
+            existing = {
+                canonicalize_url(r[0])
+                for r in con.execute("SELECT list_url FROM sources").fetchall()
+                if canonicalize_url(r[0])
+            }
+            for preset in DEFAULT_SOURCE_PRESETS:
+                url = canonicalize_url(preset.get("list_url", ""))
+                if not url or url in existing:
+                    continue
+                con.execute("""
+                    INSERT INTO sources(name,list_url,selector,strict_selector,max_articles,max_list_pages,list_mode,page_template,
+                        retry,min_chars,pause,skip_processed,output_dir,enabled,created_at,updated_at)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """, (
+                    str(preset.get("name") or host_of(url) or "Źródło")[:160],
+                    url,
+                    str(preset.get("selector") or ""),
+                    int(bool(preset.get("strict_selector", False))),
+                    max(1, int(preset.get("max_articles", 40) or 40)),
+                    max(1, int(preset.get("max_list_pages", 1) or 1)),
+                    str(preset.get("list_mode") or "single"),
+                    str(preset.get("page_template") or ""),
+                    1,
+                    300,
+                    8.0,
+                    1,
+                    "",
+                    int(bool(preset.get("enabled", True))),
+                    now,
+                    now,
+                ))
+                existing.add(url)
+                added += 1
+            con.execute("""
+                INSERT INTO app_settings(key,value,updated_at) VALUES(?,?,?)
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+            """, (migration_key, json.dumps({"added": added, "at": now}, ensure_ascii=False), now))
+        return added
 
     def get_source(self, source_id):
         sid = int(source_id or 0)
@@ -2235,6 +2323,10 @@ class Downloader:
                 "sources_enabled": sum(1 for x in self.list_sources() if x.get("enabled")),
                 "active_source_id": self.active_source_id,
                 "active_source_name": self.active_source_name,
+                "batch_running": self.batch_running,
+                "batch_index": self.batch_index,
+                "batch_total": self.batch_total,
+                "batch_done_sources": self.batch_done_sources,
                 "last_test_links": list(self.last_test_links[-100:]),
                 "recent_failures": list(self.recent_failures[-8:]),
                 "network": dict(self.network_stats),
@@ -3208,6 +3300,68 @@ class Downloader:
             self.thread.start()
             return True
 
+    def start_all(self):
+        sources = [x for x in self.list_sources() if x.get("enabled")]
+        if not sources:
+            raise ValueError("Brak włączonych źródeł")
+        with self.lock:
+            if self.running:
+                return False
+            self.running = True
+            self.batch_running = True
+            self.batch_index = 0
+            self.batch_total = len(sources)
+            self.batch_done_sources = 0
+            self.stop_event.clear()
+            self.fatal_stop_reason = ""
+            self.progress = {
+                "done": 0, "failed": 0, "found": 0, "attempted": 0,
+                "skipped": 0, "list_page": 0, "current": "",
+            }
+            self.recent_failures = []
+            self.thread = threading.Thread(target=self._run_all_sources, args=(sources,), daemon=True)
+            self.thread.start()
+            return True
+
+    def _run_all_sources(self, sources):
+        total = len(sources)
+        completed = 0
+        try:
+            for idx, src in enumerate(sources, 1):
+                if self.stop_event.is_set():
+                    break
+                cfg = settings_from_json({**src, "source_id": src.get("id", 0), "source_name": src.get("name", "")})
+                with self.lock:
+                    self.batch_index = idx
+                    self.active_source_id = int(src.get("id") or 0)
+                    self.active_source_name = str(src.get("name") or "")
+                    self.progress = {
+                        "done": 0, "failed": 0, "found": 0, "attempted": 0,
+                        "skipped": 0, "list_page": 0, "current": "",
+                    }
+                self._set_status(f"PAKIET ŹRÓDEŁ {idx}/{total} · {self.active_source_name}")
+                self._run(cfg)
+                completed += 1
+                with self.lock:
+                    self.batch_done_sources = completed
+                if self.fatal_stop_reason:
+                    break
+        finally:
+            stopped = self.stop_event.is_set()
+            fatal = self.fatal_stop_reason
+            with self.lock:
+                self.batch_running = False
+                self.running = False
+                self.active_source_id = 0
+                self.active_source_name = ""
+                self.progress["current"] = ""
+            if fatal:
+                self._set_status(f"PAKIET PRZERWANY: {fatal} · źródła ukończone {completed}/{total}")
+            elif stopped:
+                self._set_status(f"Pakiet zatrzymany · źródła ukończone {completed}/{total}")
+            else:
+                self._set_status(f"Pakiet gotowy · źródła ukończone {completed}/{total}")
+
     def stop(self):
         self.stop_event.set()
         self._set_status("Zatrzymywanie po bieżącej operacji…")
@@ -3511,10 +3665,11 @@ class Downloader:
             self._mark_source_state(cfg.source_id, self.status, error="", ran=True)
         finally:
             with self.lock:
-                self.running = False
+                if not self.batch_running:
+                    self.running = False
+                    self.active_source_id = 0
+                    self.active_source_name = ""
                 self.progress["current"] = ""
-                self.active_source_id = 0
-                self.active_source_name = ""
 
 
 DL = Downloader()
@@ -3527,10 +3682,10 @@ INDEX_HTML = r'''<!doctype html>
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,sans-serif;padding:14px}.wrap{max-width:820px;margin:auto}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}h1{font-size:23px}h2{font-size:17px;margin:4px 0 10px}label{display:block;color:var(--muted);font-size:13px;margin:10px 0 5px}input,select{width:100%;min-height:50px;background:#0f1419;color:#fff;border:1px solid #3a4652;border-radius:12px;padding:0 12px;font-size:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px}button{min-height:52px;border:0;border-radius:13px;color:#fff;font-weight:800;font-size:15px;background:#28323d;padding:8px}button.ok{background:var(--ok)}button.bad{background:var(--bad)}button.blue{background:var(--blue)}button.amber{background:var(--amber)}.status{background:#0f1419;border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-word}.tiny{font-size:12px;color:var(--muted)}.links a{display:block;color:#74b8ff;padding:8px 0;border-bottom:1px solid #26313b;text-decoration:none}.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}.check{display:flex;align-items:center;gap:8px;background:#121920;padding:10px;border-radius:10px}.check input{width:auto;min-height:auto}.fail{padding:7px 0;border-bottom:1px solid #26313b;color:#ffb2b7;word-break:break-word}.folderbuttons{margin-top:8px}.folderbuttons button{min-height:48px}.source{background:#11181f;border:1px solid #2b3641;border-radius:13px;padding:11px;margin:8px 0}.source.off{opacity:.58}.sourcehead{display:flex;gap:8px;align-items:center;justify-content:space-between}.sourceurl{word-break:break-all;color:#90bde8;font-size:12px;margin:5px 0}.sourceactions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.sourceactions button{min-height:42px;font-size:12px}.badge{font-size:11px;padding:4px 7px;border-radius:999px;background:#25303a}.badge.on{background:#143c24}.picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;padding:14px}.picker.show{display:flex;align-items:center;justify-content:center}.pickerbox{width:min(680px,100%);max-height:88vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}.pickerpath{font-size:11px;color:var(--muted);word-break:break-all;margin:6px 0 10px}.pickertip{background:#10261a;border:1px solid #2f8f5b;border-radius:12px;padding:10px;margin:8px 0 12px}.quickgrid{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:10px}.dirbtn{width:100%;min-height:48px;text-align:left;padding:8px 12px;margin:4px 0;background:#202a34}.rootbtn{background:#24313c}.pickeractions{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:sticky;bottom:-14px;background:var(--card);padding-top:10px;padding-bottom:4px}@media(max-width:560px){.buttons,.grid{grid-template-columns:1fr 1fr}.sourceactions{grid-template-columns:1fr}.pickerbox{max-height:92vh}}
 </style></head><body><div class="wrap">
 <h1>📰 Przewijak — ARTYKUŁY · MultiSource</h1>
-<div class="card" style="border-color:#2f8f5b"><b>ETAP 1 — WIELE ŹRÓDEŁ + TRWAŁA KONFIGURACJA</b><div class="tiny">Źródła są zapisywane w SQLite i nie znikają po odświeżeniu/restarcie. Na tym etapie uruchamiasz wybrane źródło ręcznie. Automatyczne obchodzenie całej listy będzie Etapem 2.</div></div>
+<div class="card" style="border-color:#2f8f5b"><b>V15.2 — PAKIET ŹRÓDEŁ + AUTOMATYCZNE NOWE ARTYKUŁY</b><div class="tiny">Program ma pakiet wielu redakcji zapisany w SQLite. START WSZYSTKICH przechodzi po włączonych źródłach po kolei, z jednym GET naraz, odstępem i pomijaniem artykułów już obecnych w bazie.</div></div>
 <div class="card"><h2>Źródła</h2><div class="buttons"><button class="ok" onclick="saveSource()">💾 ZAPISZ / AKTUALIZUJ ŹRÓDŁO</button><button onclick="newSource()">＋ NOWE ŹRÓDŁO</button></div><div id="sources" class="tiny" style="margin-top:10px">Ładowanie…</div></div>
 <div class="card"><input id="sourceid" type="hidden" value="0"><label>Nazwa źródła</label><input id="sourcename" placeholder="np. TVN24 — Najnowsze"><label>URL listy / strony z artykułami</label><input id="url" placeholder="https://..."><label>Folder zapisu</label><input id="outdir" placeholder="Folder wybierzesz przyciskiem poniżej"><div class="buttons folderbuttons"><button id="pickbtn" type="button" class="ok" onclick="pickFolder()">📁 WYBIERZ FOLDER</button><button type="button" onclick="setFolder()">✅ USTAW WPISANĄ ŚCIEŻKĘ</button><button type="button" onclick="defaultFolder()">📥 DOMYŚLNE POBRANE</button><button type="button" onclick="openArchive()">📚 ARCHIWUM</button></div><div class="tiny" id="folderhelp">Nie musisz znać ścieżki — naciśnij WYBIERZ FOLDER i wskaż katalog.</div><label>Selektor CSS linków — opcjonalnie</label><input id="selector" placeholder="TVN24 i TVP Info tag: może zostać puste — profil ustawi się sam"><div class="checks"><label class="check"><input id="strict" type="checkbox" checked>Tylko selektor</label><label class="check"><input id="skip" type="checkbox" checked>Pomiń artykuły już w bazie</label></div><label>Sposób przechodzenia listy</label><select id="mode"><option value="auto">AUTO — strony / profil serwisu</option><option value="pages">STRONY — 1,2,3 / Następna</option><option value="scroll">PRZEWIJANIE — profil dynamiczny</option><option value="single">TYLKO BIEŻĄCA STRONA</option></select><label>Wzór kolejnej strony — opcjonalnie</label><input id="template" placeholder="np. https://serwis.pl/news/page/{page}"><div class="grid"><div><label>Max NOWYCH zapisanych</label><input id="maxa" type="number" value="100" min="1"></div><div><label>Max stron / porcji</label><input id="maxp" type="number" value="100" min="1"></div><div><label>Retry po błędzie</label><input id="retry" type="number" value="1" min="0" max="1"></div><div><label>Min. znaków artykułu</label><input id="minc" type="number" value="300" min="50"></div><div><label>Min. odstęp między GET [s]</label><input id="pause" type="number" value="8" min="5" max="120" step="1"></div></div></div>
-<div class="card"><div class="buttons"><button class="blue" onclick="testList()">🧪 TEST WYBRANEGO</button><button class="ok" onclick="start()">▶ START WYBRANEGO</button><button class="bad" onclick="stop()">■ STOP</button><button onclick="refresh()">↻ ODŚWIEŻ STATUS</button></div></div>
+<div class="card"><div class="buttons"><button class="blue" onclick="testList()">🧪 TEST WYBRANEGO</button><button class="ok" onclick="start()">▶ START WYBRANEGO</button><button class="ok" onclick="startAll()">▶▶ START WSZYSTKICH WŁĄCZONYCH</button><button class="bad" onclick="stop()">■ STOP</button><button onclick="refresh()">↻ ODŚWIEŻ STATUS</button></div></div>
 <div class="card"><h2>Status</h2><div id="status" class="status">Gotowe</div><p id="folder" class="tiny"></p></div>
 <div class="card"><h2>Ostatnie błędy</h2><div id="failures" class="tiny">—</div></div>
 <div class="card"><h2>Linki z TEST LISTY</h2><div id="links" class="links tiny">—</div></div>
@@ -3553,6 +3708,7 @@ function scheduleConfigSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveC
 async function loadConfig(){try{const r=await fetch('/api/config',{cache:'no-store'});const j=await r.json();if(j.config&&Object.keys(j.config).length)fill(j.config);configLoaded=true}catch(e){configLoaded=true}}
 async function testList(){try{await saveConfig();const j=await post('/api/test',cfg());if(j.cancelled)return}catch(e){alert(e.message)}refresh();loadSources()}
 async function start(){try{await saveConfig();await post('/api/start',cfg())}catch(e){alert(e.message)}refresh()}
+async function startAll(){try{await post('/api/start-all',{})}catch(e){alert(e.message)}refresh();loadSources()}
 async function stop(){try{await post('/api/stop',{})}catch(e){}refresh()}
 let pickerCurrent='';
 async function pickFolder(){try{const j=await post('/api/pick-output',{});if(j.warning)alert(j.warning);if(j.picker==='internal'){await openFolderPicker(j.initial_path||'');return}if(j.output_root)document.getElementById('outdir').value=j.output_root;scheduleConfigSave()}catch(e){alert(e.message)}refresh()}
@@ -3563,7 +3719,7 @@ function closeFolderPicker(){document.getElementById('folderPicker').classList.r
 async function choosePickerFolder(){try{const j=await post('/api/output',{output_dir:pickerCurrent});if(j.output_root)document.getElementById('outdir').value=j.output_root;closeFolderPicker();scheduleConfigSave();refresh()}catch(e){alert(e.message)}}
 function openArchive(){window.open('/archive/index.html','_blank')}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function refresh(){try{const r=await fetch('/api/status',{cache:'no-store'});const s=await r.json();const p=s.progress||{};document.getElementById('status').textContent=(s.running?'🟢 PRACUJE'+(s.active_source_name?' · '+s.active_source_name:'')+'\\n':'⚪ STOP\\n')+(s.status||'')+'\\n\\nZapisane: '+(p.done||0)+' | Błędy: '+(p.failed||0)+' | Próbowane: '+(p.attempted||0)+' | Pominięte: '+(p.skipped||0)+' | znalezione: '+(p.found||0)+' | lista: '+(p.list_page||0)+(p.current?'\\n\\nTeraz: '+p.current:'');const n=s.network||{};const cl=s.cleanup||{};document.getElementById('folder').textContent='Folder: '+(s.output_root||'—')+' · Źródła: '+(s.sources_count||0)+' ('+(s.sources_enabled||0)+' włącz.) · Baza: '+(s.database_count||0)+' artykułów · GET: '+(n.requests||0)+' · cache: '+(n.cache_hits||0)+' · cleanup: '+(cl.removed||0)+' · platforma: '+(s.platform||'—')+' · wersja '+(s.version||'');const od=document.getElementById('outdir');if(!od.value||(s.storage_mode==='saf'&&od.value.startsWith('Android/SAF:'))){od.value=s.output_root||'';}const fh=document.getElementById('folderhelp');if(s.platform==='android-termux'){fh.textContent=s.storage_mode==='saf'?'Aktywny jest systemowy folder Android/SAF.':'Naciśnij WYBIERZ FOLDER — Android otworzy wybór katalogu.';}else{fh.textContent='Naciśnij WYBIERZ FOLDER — otworzy się normalne okno Windows.';}const links=s.last_test_links||[];document.getElementById('links').innerHTML=links.length?links.map(x=>'<a href="'+esc(x.url)+'" target="_blank">['+x.score+'] '+esc(x.text||x.url)+'</a>').join(''):'—';const fs=s.recent_failures||[];document.getElementById('failures').innerHTML=fs.length?fs.slice().reverse().map(x=>'<div class="fail"><b>'+esc(x.reason)+'</b><br>'+esc(x.url)+'</div>').join(''):'—'}catch(e){document.getElementById('status').textContent='Błąd połączenia z programem'}}
+async function refresh(){try{const r=await fetch('/api/status',{cache:'no-store'});const s=await r.json();const p=s.progress||{};document.getElementById('status').textContent=(s.running?'🟢 PRACUJE'+(s.active_source_name?' · '+s.active_source_name:'')+(s.batch_running?' · źródło '+(s.batch_index||0)+'/'+(s.batch_total||0):'')+'\\n':'⚪ STOP\\n')+(s.status||'')+'\\n\\nZapisane: '+(p.done||0)+' | Błędy: '+(p.failed||0)+' | Próbowane: '+(p.attempted||0)+' | Pominięte: '+(p.skipped||0)+' | znalezione: '+(p.found||0)+' | lista: '+(p.list_page||0)+(p.current?'\\n\\nTeraz: '+p.current:'');const n=s.network||{};const cl=s.cleanup||{};document.getElementById('folder').textContent='Folder: '+(s.output_root||'—')+' · Źródła: '+(s.sources_count||0)+' ('+(s.sources_enabled||0)+' włącz.) · Baza: '+(s.database_count||0)+' artykułów · GET: '+(n.requests||0)+' · cache: '+(n.cache_hits||0)+' · cleanup: '+(cl.removed||0)+' · platforma: '+(s.platform||'—')+' · wersja '+(s.version||'');const od=document.getElementById('outdir');if(!od.value||(s.storage_mode==='saf'&&od.value.startsWith('Android/SAF:'))){od.value=s.output_root||'';}const fh=document.getElementById('folderhelp');if(s.platform==='android-termux'){fh.textContent=s.storage_mode==='saf'?'Aktywny jest systemowy folder Android/SAF.':'Naciśnij WYBIERZ FOLDER — Android otworzy wybór katalogu.';}else{fh.textContent='Naciśnij WYBIERZ FOLDER — otworzy się normalne okno Windows.';}const links=s.last_test_links||[];document.getElementById('links').innerHTML=links.length?links.map(x=>'<a href="'+esc(x.url)+'" target="_blank">['+x.score+'] '+esc(x.text||x.url)+'</a>').join(''):'—';const fs=s.recent_failures||[];document.getElementById('failures').innerHTML=fs.length?fs.slice().reverse().map(x=>'<div class="fail"><b>'+esc(x.reason)+'</b><br>'+esc(x.url)+'</div>').join(''):'—'}catch(e){document.getElementById('status').textContent='Błąd połączenia z programem'}}
 for(const id of ['sourcename','url','outdir','selector','strict','skip','mode','template','maxa','maxp','retry','minc','pause']){document.addEventListener('input',e=>{if(e.target&&e.target.id===id)scheduleConfigSave()});document.addEventListener('change',e=>{if(e.target&&e.target.id===id)scheduleConfigSave()})}
 (async()=>{await loadConfig();await loadSources();await refresh()})();setInterval(()=>{refresh();if(!document.hidden)loadSources()},5000);
 </script></body></html>'''
@@ -3671,6 +3827,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json({"ok": False, "error": "Brak URL"}, 400)
                 links = DL.test_list(cfg)
                 return self._json({"ok": True, "count": len(links), "links": links[:100]})
+            if self.path == "/api/start-all":
+                if not DL.start_all():
+                    return self._json({"ok": False, "error": "Program już pracuje"}, 409)
+                return self._json({"ok": True})
             if self.path == "/api/start":
                 cfg = settings_from_json(d)
                 if not cfg.list_url:
@@ -3723,7 +3883,7 @@ def create_server_on_free_port(host=HOST, start_port=PORT, attempts=100):
 def main():
     server, actual_port = create_server_on_free_port(HOST, PORT)
     panel_url = f"http://{HOST}:{actual_port}"
-    print("\nPRZEWIJAK — ARTYKUŁY / V15.0 ETAP 1 — MULTISOURCE")
+    print("\nPRZEWIJAK — ARTYKUŁY / V15.2 — MULTISOURCE AUTO NEW")
     print("Wersja:", APP_VERSION)
     print("Platforma:", DL.runtime_platform)
     print("Panel:", panel_url)
