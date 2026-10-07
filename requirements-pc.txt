@@ -1,2 +1,2 @@
 -r requirements.txt
-pywebview>=5.3,<6
+pywebview[pyside6]>=5.3,<6
