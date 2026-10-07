@@ -1,23 +1,52 @@
-# Przewijak — ARTYKUŁY
+# Przewijak — ARTYKUŁY V15.1 PC APP
 
-Nowy, osobny projekt pobierania i archiwizacji artykułów. Baza wyjściowa: przesłany `Przewijak_Artykuly_V15_0_ETAP1_MULTISOURCE_CLEAN.zip`, V15.0 MULTISOURCE.
+Rozwinięcie V15.0 MULTISOURCE bez przebudowy silnika pobierania i bez zmiany schematu bazy artykułów.
 
-## Stan projektu
+## Co zmieniono w tym etapie
 
-- Kod V15.0 i sposób wyboru folderu zachowane bez zmian. Wiele zapisanych źródeł, trwałe ustawienia i relacje article_sources; źródła uruchamiane ręcznie.
-- Obecny panel PC otwiera się w przeglądarce; ta paczka nie zawiera EXE ani APK.
-- Android: skrypty dla Termuxa i integracja SAF; brak APK.
-- Wymiana TRANSFER PC/PHONE jest zaplanowana, jeszcze nie wdrożona.
-- Nie jest to projekt LIVE eSoccer. Nie używa identyfikatorów meczów.
+- **PC ma własne okno aplikacji** (`desktop_app.py`) zamiast otwierania panelu w zewnętrznej przeglądarce.
+- Okno korzysta z Windows WebView2 przez `pywebview`; lokalny panel HTTP jest tylko wewnętrzną warstwą UI.
+- **CORE V15.0 pozostał wspólny**: pobieranie, selektory, źródła, deduplikacja, SQLite, archiwum i wybór folderu nie zostały przepisane.
+- Zachowane jest automatyczne wyszukiwanie wolnego portu.
+- Dodany jest skrypt `BUDUJ_EXE_WINDOWS.bat` tworzący `Przewijak_ARTYKULY_PC.exe`.
+- Dodany jest workflow GitHub Actions `Zbuduj aplikacje PC EXE`, który buduje gotową paczkę Windows na `windows-latest`.
+- Dodana jest własna ikona aplikacji w `assets/przewijak.ico`.
 
-## Uruchomienie PC
+## Uruchomienie na Windows z kodu
 
-Rozpakuj projekt, uruchom `INSTALUJ_WINDOWS.bat`, a następnie `START_WINDOWS.bat`. Pierwszy start wymaga Pythona oraz internetu do pobrania zależności. Szczegóły: `README_ETAP1_MULTISOURCE.txt`.
+1. Uruchom `INSTALUJ_WINDOWS.bat`.
+2. Uruchom `START_WINDOWS.bat`.
+3. Program otworzy się we własnym oknie **Przewijak — ARTYKUŁY**.
 
-## Rozwój
+Nie trzeba ręcznie wpisywać adresu localhost ani otwierać panelu w Edge/Chrome.
 
-Plan: [docs/PLAN_PC_PHONE_TRANSFER.md](docs/PLAN_PC_PHONE_TRANSFER.md).
-Format wymiany: [docs/TRANSFER_V1.md](docs/TRANSFER_V1.md).
-Pochodzenie kodu: [docs/POCHODZENIE.json](docs/POCHODZENIE.json).
+## Budowanie prawdziwego EXE
 
-GitHub Actions sprawdza składnię Pythona. Ten test nie potwierdza skuteczności pobierania z serwisów ani działania na urządzeniu Android.
+Uruchom `BUDUJ_EXE_WINDOWS.bat` na Windows. Wynik:
+
+`dist\Przewijak_ARTYKULY_PC\Przewijak_ARTYKULY_PC.exe`
+
+Wybrano wariant `onedir`, a nie pojedynczy `onefile`, bo jest stabilniejszy dla WebView2 i łatwiejszy do diagnozowania. Użytkownik nadal uruchamia jeden plik EXE znajdujący się w gotowym folderze aplikacji.
+
+### GitHub
+
+Workflow `.github/workflows/build-windows.yml` może zbudować tę samą paczkę bez lokalnej instalacji PyInstallera. W Actions uruchom workflow **Zbuduj aplikacje PC EXE** i pobierz artefakt `Przewijak_ARTYKULY_PC`.
+
+## Dane użytkownika
+
+Baza historii pozostaje w dotychczasowej lokalizacji Windows:
+
+`%LOCALAPPDATA%\PrzewijakArtykuly\baza_artykulow.sqlite3`
+
+Aktualizacja programu nie powinna kasować tej bazy. Folder archiwum artykułów nadal wybiera użytkownik.
+
+## PHONE / TRANSFER
+
+Android nadal jest etapem następnym. Ta wersja **nie udaje APK** i nie przenosi telefonu na Termux jako rozwiązania docelowego. Dokumentacja wspólnego formatu pozostaje w `docs/PLAN_PC_PHONE_TRANSFER.md` oraz `docs/TRANSFER_V1.md`.
+
+Docelowa kolejność:
+
+1. ustabilizować i przetestować V15.1 PC APP,
+2. wdrożyć TRANSFER do wspólnego modułu,
+3. zbudować natywne APK Android bez Termuxa,
+4. test zgodności danych PC ↔ PHONE.
