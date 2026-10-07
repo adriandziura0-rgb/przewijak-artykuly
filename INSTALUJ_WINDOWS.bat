@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 echo.
 echo ===============================================
-echo  PRZEWIJAK ARTYKULY V15.0 ETAP 1 MULTISOURCE - WINDOWS
+echo  PRZEWIJAK ARTYKULY V15.1 PC APP - WINDOWS
 echo ===============================================
 echo.
 where py >nul 2>nul
@@ -12,7 +12,7 @@ if %errorlevel%==0 (
 ) else (
   set PY=python
 )
-%PY% -m pip install -r requirements.txt
+%PY% -m pip install -r requirements-pc.txt
 if errorlevel 1 goto :pip_error
 
 echo.
@@ -24,7 +24,7 @@ if errorlevel 1 goto :optional_warning
 
 echo.
 echo GOTOWE. Uruchom START_WINDOWS.bat
-echo TVP Info /tag?tag=...: selektor CSS moze zostac pusty.
+echo Program otworzy sie we wlasnym oknie, bez panelu w zewnetrznej przegladarce.
 pause
 exit /b 0
 
