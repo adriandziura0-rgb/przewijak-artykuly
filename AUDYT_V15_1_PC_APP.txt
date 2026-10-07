@@ -1,0 +1,33 @@
+PRZEWIJAK — ARTYKUŁY V15.1 PC APP — AUDYT WYDANIA
+Data: 2026-10-07
+
+CEL ETAPU
+- Z V15.0 zrobić wersję PC działającą we własnym oknie.
+- Nie przepisywać ani nie rozwidlać silnika pobierania.
+- Zachować bazę SQLite, multisource, folder zapisu i wolny port.
+
+ZMIANY
+1. Dodano desktop_app.py — warstwa natywnego okna Windows (pywebview/WebView2).
+2. START_WINDOWS.bat uruchamia desktop_app.py zamiast app.py.
+3. Dodano requirements-pc.txt.
+4. Dodano BUDUJ_EXE_WINDOWS.bat (PyInstaller, wariant onedir).
+5. Dodano .github/workflows/build-windows.yml do budowy gotowego EXE na Windows.
+6. Dodano assets/przewijak.ico.
+7. Wersja CORE oznaczona 15.1-pc-native-window-clean.
+8. Nie zmieniono schematu bazy SQLite ani podstawowych mechanizmów pobierania V15.0.
+
+TESTY WYKONANE W ŚRODOWISKU ROBOCZYM
+- python -m py_compile app.py desktop_app.py: OK
+- lokalny serwer na wolnym porcie: OK
+- GET /: HTTP 200
+- GET /api/status: HTTP 200 + poprawny JSON
+- GET /api/config: HTTP 200 + poprawny JSON
+- GET /api/sources: HTTP 200 + poprawny JSON
+
+OGRANICZENIE TESTU
+- Gotowego Windows EXE nie można wiarygodnie skompilować w tym linuksowym środowisku do natywnego formatu Windows.
+- Do paczki dodano gotowy skrypt budowania Windows oraz workflow GitHub Actions na windows-latest.
+- Samo okno WebView2 należy jeszcze potwierdzić na realnym Windows 10/11.
+
+NASTĘPNY ETAP
+- Po teście PC: moduł TRANSFER, a następnie prawdziwe APK Android bez Termuxa.
