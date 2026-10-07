@@ -14,12 +14,16 @@ if exist dist rmdir /s /q dist
   --name "Przewijak_ARTYKULY_PC" ^
   --icon "assets\przewijak.ico" ^
   --collect-all webview ^
+  --collect-all PySide6 ^
+  --exclude-module clr ^
+  --exclude-module pythonnet ^
+  --exclude-module clr_loader ^
   desktop_app.py
 if errorlevel 1 goto :err
 
 echo.
 echo GOTOWE: dist\Przewijak_ARTYKULY_PC\Przewijak_ARTYKULY_PC.exe
-echo To jest aplikacja PC we wlasnym oknie.
+echo Backend okna: Qt / PySide6 - bez pythonnet.
 pause
 exit /b 0
 
