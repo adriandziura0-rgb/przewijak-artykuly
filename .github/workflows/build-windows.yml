@@ -1,0 +1,46 @@
+name: Zbuduj aplikacje PC EXE
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app.py'
+      - 'desktop_app.py'
+      - 'requirements*.txt'
+      - 'assets/**'
+      - 'BUDUJ_EXE_WINDOWS.bat'
+      - '.github/workflows/build-windows.yml'
+permissions:
+  contents: read
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Zainstaluj zaleznosci
+        run: python -m pip install -r requirements-pc.txt "pyinstaller>=6.10,<7"
+      - name: Sprawdz skladnie
+        run: python -m py_compile app.py desktop_app.py
+      - name: Zbuduj EXE
+        shell: cmd
+        run: >-
+          python -m PyInstaller --noconfirm --clean --windowed --onedir
+          --name "Przewijak_ARTYKULY_PC"
+          --icon "assets\przewijak.ico"
+          --collect-all webview
+          desktop_app.py
+      - name: Dolacz dokumentacje
+        shell: powershell
+        run: |
+          Copy-Item README.md dist/Przewijak_ARTYKULY_PC/
+          Copy-Item -Recurse docs dist/Przewijak_ARTYKULY_PC/docs
+      - name: Spakuj wersje PC
+        shell: powershell
+        run: Compress-Archive -Path dist/Przewijak_ARTYKULY_PC/* -DestinationPath Przewijak_ARTYKULY_PC.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Przewijak_ARTYKULY_PC
+          path: Przewijak_ARTYKULY_PC.zip
+          if-no-files-found: error
