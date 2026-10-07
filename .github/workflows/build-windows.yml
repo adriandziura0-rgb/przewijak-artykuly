@@ -23,6 +23,11 @@ jobs:
         run: python -m pip install -r requirements-pc.txt "pyinstaller>=6.10,<7"
       - name: Sprawdz skladnie
         run: python -m py_compile app.py desktop_app.py
+      - name: Sprawdz backend Qt
+        shell: powershell
+        run: |
+          python -c "from PySide6 import QtCore; print('PySide6', QtCore.__version__)"
+          python -c "import webview; print('pywebview OK')"
       - name: Zbuduj EXE
         shell: cmd
         run: >-
@@ -30,6 +35,10 @@ jobs:
           --name "Przewijak_ARTYKULY_PC"
           --icon "assets\przewijak.ico"
           --collect-all webview
+          --collect-all PySide6
+          --exclude-module clr
+          --exclude-module pythonnet
+          --exclude-module clr_loader
           desktop_app.py
       - name: Dolacz dokumentacje
         shell: powershell
