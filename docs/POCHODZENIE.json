@@ -1,0 +1,14 @@
+{
+  "source_package": "Przewijak_Artykuly_V15_0_ETAP1_MULTISOURCE_CLEAN.zip",
+  "base_version": "15.0-etap1-multisource-clean",
+  "original_code_unchanged": true,
+  "files": {
+    "START_WINDOWS.bat": "1f2385119d8944f34fb32537da1471f2a1fa3219324e449589a5adea114ceea9",
+    "app.py": "247aa890823f4ca77dc2e328cc0d8baea358dd9a759e112353dd6571ce0e2a32",
+    "requirements.txt": "9b4e4462259200c9cacef83f48e42d35e374b1a62da9b1a8560e84809db80cff",
+    "START_ANDROID.sh": "79cad3f12d851f1385378d1ce02adeb82190d8b9b33547a5131625f240d1b89e",
+    "README_ETAP1_MULTISOURCE.txt": "b3080c793ee11a05f00e3cc9807408492f7202a134c6002f1f2b5bf458290195",
+    "INSTALUJ_WINDOWS.bat": "a3c4b519e30461322252a351c8861aa21156197041678a106d8b8d021b6d860f",
+    "INSTALUJ_ANDROID.sh": "8d328dc4f7c5e3191432e557e6ffd26ed1dc59633c2a62468fd6db0dd633e9fe"
+  }
+}
