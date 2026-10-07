@@ -11,4 +11,4 @@ jobs:
         with:
           python-version: '3.10'
       - name: Sprawdź składnię
-        run: python -m py_compile app.py
+        run: python -m py_compile app.py desktop_app.py
