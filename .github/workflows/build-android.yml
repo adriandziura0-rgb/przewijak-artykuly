@@ -44,6 +44,9 @@ jobs:
       - name: Sprawdź wspólny CORE
         run: python -m py_compile app.py android/app/src/main/python/mobile_entry.py
 
+      - name: Włóż dokładnie ten sam CORE do APK
+        run: cp app.py android/app/src/main/python/app.py
+
       - name: Zbuduj APK
         working-directory: android
         run: gradle :app:assembleDebug --stacktrace
