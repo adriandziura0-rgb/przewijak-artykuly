@@ -48,7 +48,6 @@ chaquopy {
     }
     sourceSets {
         getByName("main") {
-            srcDir("../../")
             srcDir("src/main/python")
         }
     }
