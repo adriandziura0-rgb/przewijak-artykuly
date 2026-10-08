@@ -27,12 +27,14 @@ from bs4 import BeautifulSoup
 
 PORT = int(os.environ.get("PRZEWIJAK_PORT", "8765"))
 HOST = "127.0.0.1"
-APP_VERSION = "15.2-multisource-auto-new-clean"
+APP_VERSION = "15.3-pc-phone-native-clean"
 
 
 def runtime_platform():
     """Rozpoznaje środowisko bez uzależniania programu od GUI systemowego."""
     prefix = (os.environ.get("PREFIX") or "").lower()
+    if os.environ.get("PRZEWIJAK_ANDROID_NATIVE") == "1":
+        return "android-native"
     if os.environ.get("TERMUX_VERSION") or "com.termux" in prefix:
         return "android-termux"
     if os.name == "nt":
@@ -42,6 +44,8 @@ def runtime_platform():
 
 def preferred_downloads_dir():
     """Najbardziej użyteczny katalog Pobrane dla aktualnej platformy."""
+    if runtime_platform() == "android-native":
+        return Path(os.environ.get("HOME") or str(Path.home())) / "Downloads"
     if runtime_platform() == "android-termux":
         shared = [Path.home() / "storage" / "downloads", Path("/storage/emulated/0/Download")]
         for p in shared:
@@ -1335,6 +1339,10 @@ class Downloader:
 
     def _global_db_path(self):
         """Stała baza historii niezależna od folderu zapisu i wersji programu."""
+        if self.runtime_platform == "android-native":
+            root = Path(os.environ.get("HOME") or str(Path.home())) / "PrzewijakArtykuly"
+            root.mkdir(parents=True, exist_ok=True)
+            return root / "baza_artykulow.sqlite3"
         if self.runtime_platform == "android-termux":
             legacy_db = Path.home() / "AppData" / "Local" / "PrzewijakArtykuly" / "baza_artykulow.sqlite3"
             if legacy_db.exists():
@@ -1923,7 +1931,7 @@ class Downloader:
         return self.output_display()
 
     def output_display(self):
-        if self.storage_mode == "saf" and self.saf_root_uri:
+        if self.storage_mode in {"saf", "android-saf"} and (self.saf_root_uri or self.saf_label):
             return f"Android/SAF: {self.saf_label or 'wybrany folder'}"
         return str(self.output_root)
 
@@ -2014,6 +2022,8 @@ class Downloader:
         with self.lock:
             if self.running:
                 raise RuntimeError("Nie można zmienić folderu podczas pobierania")
+        if self.runtime_platform == "android-native":
+            return {"picker": "android-native", "output_root": self.output_display(), "storage_mode": "android-saf"}
         if self.runtime_platform == "android-termux":
             # 1) Najpierw zachowujemy starszy, prosty mechanizm /storage/UUID, ale tylko
             #    gdy ten pełny nośnik jest DZISIAJ faktycznie czytelny przez Termuxa.
@@ -3711,7 +3721,7 @@ async function start(){try{await saveConfig();await post('/api/start',cfg())}cat
 async function startAll(){try{await post('/api/start-all',{})}catch(e){alert(e.message)}refresh();loadSources()}
 async function stop(){try{await post('/api/stop',{})}catch(e){}refresh()}
 let pickerCurrent='';
-async function pickFolder(){try{const j=await post('/api/pick-output',{});if(j.warning)alert(j.warning);if(j.picker==='internal'){await openFolderPicker(j.initial_path||'');return}if(j.output_root)document.getElementById('outdir').value=j.output_root;scheduleConfigSave()}catch(e){alert(e.message)}refresh()}
+async function pickFolder(){try{if(window.AndroidBridge&&AndroidBridge.chooseFolder){AndroidBridge.chooseFolder();return}const j=await post('/api/pick-output',{});if(j.warning)alert(j.warning);if(j.picker==='internal'){await openFolderPicker(j.initial_path||'');return}if(j.output_root)document.getElementById('outdir').value=j.output_root;scheduleConfigSave()}catch(e){alert(e.message)}refresh()}
 async function setFolder(){try{const raw=val('outdir').trim();if(!raw){alert('Najpierw wpisz ścieżkę albo użyj WYBIERZ FOLDER.');return}if(raw.startsWith('Android/SAF:')){alert('Ten folder został już wybrany przez system Android.');return}const j=await post('/api/output',{output_dir:raw});if(j.output_root)document.getElementById('outdir').value=j.output_root;scheduleConfigSave()}catch(e){alert(e.message)}refresh()}
 async function defaultFolder(){try{const j=await post('/api/default-output',{});if(j.output_root)document.getElementById('outdir').value=j.output_root;scheduleConfigSave()}catch(e){alert(e.message)}refresh()}
 async function openFolderPicker(path){try{const r=await fetch('/api/folders?path='+encodeURIComponent(path||''),{cache:'no-store'});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));pickerCurrent=j.path||'';document.getElementById('pickerPath').textContent=pickerCurrent||'—';document.getElementById('pickerStorageInfo').textContent=j.storage_info?('Dostęp: '+j.storage_info):'';const roots=j.roots||[];document.getElementById('pickerRoots').innerHTML=roots.map(x=>'<button class="dirbtn rootbtn" data-p="'+esc(encodeURIComponent(x.path||''))+'" onclick="openFolderPicker(decodeURIComponent(this.dataset.p))">'+esc(x.name||'Pamięć')+'</button>').join('');let h='';if(j.parent)h+='<button class="dirbtn" data-p="'+esc(encodeURIComponent(j.parent))+'" onclick="openFolderPicker(decodeURIComponent(this.dataset.p))">⬆️ Folder wyżej</button>';for(const x of (j.dirs||[])){h+='<button class="dirbtn" data-p="'+esc(encodeURIComponent(x.path||''))+'" onclick="openFolderPicker(decodeURIComponent(this.dataset.p))">📁 '+esc(x.name)+'</button>'}document.getElementById('pickerDirs').innerHTML=h||'<div class="tiny">W tym miejscu nie ma podfolderów.</div>';document.getElementById('folderPicker').classList.add('show')}catch(e){alert('Nie udało się wejść do folderu: '+e.message)}}
@@ -3719,7 +3729,7 @@ function closeFolderPicker(){document.getElementById('folderPicker').classList.r
 async function choosePickerFolder(){try{const j=await post('/api/output',{output_dir:pickerCurrent});if(j.output_root)document.getElementById('outdir').value=j.output_root;closeFolderPicker();scheduleConfigSave();refresh()}catch(e){alert(e.message)}}
 function openArchive(){window.open('/archive/index.html','_blank')}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function refresh(){try{const r=await fetch('/api/status',{cache:'no-store'});const s=await r.json();const p=s.progress||{};document.getElementById('status').textContent=(s.running?'🟢 PRACUJE'+(s.active_source_name?' · '+s.active_source_name:'')+(s.batch_running?' · źródło '+(s.batch_index||0)+'/'+(s.batch_total||0):'')+'\\n':'⚪ STOP\\n')+(s.status||'')+'\\n\\nZapisane: '+(p.done||0)+' | Błędy: '+(p.failed||0)+' | Próbowane: '+(p.attempted||0)+' | Pominięte: '+(p.skipped||0)+' | znalezione: '+(p.found||0)+' | lista: '+(p.list_page||0)+(p.current?'\\n\\nTeraz: '+p.current:'');const n=s.network||{};const cl=s.cleanup||{};document.getElementById('folder').textContent='Folder: '+(s.output_root||'—')+' · Źródła: '+(s.sources_count||0)+' ('+(s.sources_enabled||0)+' włącz.) · Baza: '+(s.database_count||0)+' artykułów · GET: '+(n.requests||0)+' · cache: '+(n.cache_hits||0)+' · cleanup: '+(cl.removed||0)+' · platforma: '+(s.platform||'—')+' · wersja '+(s.version||'');const od=document.getElementById('outdir');if(!od.value||(s.storage_mode==='saf'&&od.value.startsWith('Android/SAF:'))){od.value=s.output_root||'';}const fh=document.getElementById('folderhelp');if(s.platform==='android-termux'){fh.textContent=s.storage_mode==='saf'?'Aktywny jest systemowy folder Android/SAF.':'Naciśnij WYBIERZ FOLDER — Android otworzy wybór katalogu.';}else{fh.textContent='Naciśnij WYBIERZ FOLDER — otworzy się normalne okno Windows.';}const links=s.last_test_links||[];document.getElementById('links').innerHTML=links.length?links.map(x=>'<a href="'+esc(x.url)+'" target="_blank">['+x.score+'] '+esc(x.text||x.url)+'</a>').join(''):'—';const fs=s.recent_failures||[];document.getElementById('failures').innerHTML=fs.length?fs.slice().reverse().map(x=>'<div class="fail"><b>'+esc(x.reason)+'</b><br>'+esc(x.url)+'</div>').join(''):'—'}catch(e){document.getElementById('status').textContent='Błąd połączenia z programem'}}
+async function refresh(){try{const r=await fetch('/api/status',{cache:'no-store'});const s=await r.json();const p=s.progress||{};document.getElementById('status').textContent=(s.running?'🟢 PRACUJE'+(s.active_source_name?' · '+s.active_source_name:'')+(s.batch_running?' · źródło '+(s.batch_index||0)+'/'+(s.batch_total||0):'')+'\\n':'⚪ STOP\\n')+(s.status||'')+'\\n\\nZapisane: '+(p.done||0)+' | Błędy: '+(p.failed||0)+' | Próbowane: '+(p.attempted||0)+' | Pominięte: '+(p.skipped||0)+' | znalezione: '+(p.found||0)+' | lista: '+(p.list_page||0)+(p.current?'\\n\\nTeraz: '+p.current:'');const n=s.network||{};const cl=s.cleanup||{};document.getElementById('folder').textContent='Folder: '+(s.output_root||'—')+' · Źródła: '+(s.sources_count||0)+' ('+(s.sources_enabled||0)+' włącz.) · Baza: '+(s.database_count||0)+' artykułów · GET: '+(n.requests||0)+' · cache: '+(n.cache_hits||0)+' · cleanup: '+(cl.removed||0)+' · platforma: '+(s.platform||'—')+' · wersja '+(s.version||'');const od=document.getElementById('outdir');if(!od.value||(s.storage_mode==='saf'&&od.value.startsWith('Android/SAF:'))){od.value=s.output_root||'';}const fh=document.getElementById('folderhelp');if(s.platform==='android-native'){fh.textContent=s.storage_mode==='android-saf'?'Aktywny jest systemowy folder Android/SAF — archiwum jest synchronizowane do wybranego katalogu.':'Naciśnij WYBIERZ FOLDER — Android otworzy systemowy wybór pamięci telefonu lub karty SD.';}else if(s.platform==='android-termux'){fh.textContent=s.storage_mode==='saf'?'Aktywny jest systemowy folder Android/SAF.':'Naciśnij WYBIERZ FOLDER — Android otworzy wybór katalogu.';}else{fh.textContent='Naciśnij WYBIERZ FOLDER — otworzy się normalne okno Windows.';}const links=s.last_test_links||[];document.getElementById('links').innerHTML=links.length?links.map(x=>'<a href="'+esc(x.url)+'" target="_blank">['+x.score+'] '+esc(x.text||x.url)+'</a>').join(''):'—';const fs=s.recent_failures||[];document.getElementById('failures').innerHTML=fs.length?fs.slice().reverse().map(x=>'<div class="fail"><b>'+esc(x.reason)+'</b><br>'+esc(x.url)+'</div>').join(''):'—'}catch(e){document.getElementById('status').textContent='Błąd połączenia z programem'}}
 for(const id of ['sourcename','url','outdir','selector','strict','skip','mode','template','maxa','maxp','retry','minc','pause']){document.addEventListener('input',e=>{if(e.target&&e.target.id===id)scheduleConfigSave()});document.addEventListener('change',e=>{if(e.target&&e.target.id===id)scheduleConfigSave()})}
 (async()=>{await loadConfig();await loadSources();await refresh()})();setInterval(()=>{refresh();if(!document.hidden)loadSources()},5000);
 </script></body></html>'''
